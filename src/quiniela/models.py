@@ -3,6 +3,8 @@ import pickle
 # Import all necessary libraries
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # For machine learning (you will probably need to add more)
 from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV, cross_validate
@@ -25,30 +27,80 @@ from sklearn.neural_network import MLPClassifier
 
 def get_result(row):
     if row['home_goals'] > row['away_goals']:
-        return '1'
+        return 1
     elif row['home_goals'] < row['away_goals']:
-        return '2'
+        return 2
     else:
-        return 'X'  
+        return 0  
+    
+def generate_date(row):
+    date = row['date'].split("/")
+    month = date[0]
+    day = date[1]
+    year = date[2]
+    season = row['season'].split("-")[0]
+    year = season[0:2] + year
+    return f"{month}/{day}/{year}"
+
 
 
 class QuinielaModel:
+
     def train(self, train_data):
         # Do something here to train the model
         matches = train_data.copy()
         valid_matches = matches[matches['score'].notna() & matches['score'].str.contains(':')].copy()
         valid_matches[['home_goals', 'away_goals']] = (valid_matches['score'].str.split(':', expand=True).astype(int))
         valid_matches['result'] = valid_matches.apply(get_result, axis=1)
+
+        # valid_matches["season"] = valid_matches["season"].str.split("-").str[0].astype(int)
+        valid_matches["date"] = valid_matches.apply(generate_date, axis=1)
+        valid_matches[["month", "day", "year"]] = valid_matches["date"].str.split("/", expand=True).astype(int)
         
-        # Split the data into training and testing sets
-        train_set, test_set = train_test_split(valid_matches, test_size=0.2, random_state=42)
+        # valid_matches.info()
+        # valid_matches.describe()
+        # valid_matches.isna().sum()
+        # valid_matches["time"].value_counts()
+
+        valid_matches = valid_matches.drop(columns=["season", "date", "score", "time"])  
+        self.teams = pd.unique(valid_matches[["home_team", "away_team"]].values.ravel()) # Save the teams that have been used to fit the data
+
+        encoder = OneHotEncoder(handle_unknown="ignore", categories=[self.teams, self.teams])
+        encoded = encoder.fit_transform(valid_matches[["home_team", "away_team"]])
+        encoded_df = pd.DataFrame(encoded.toarray(), columns=encoder.get_feature_names_out(["home_team", "away_team"]))
+
+        valid_matches = valid_matches.drop(columns=["home_team", "away_team"])
+
+        df_final = pd.concat([encoded_df, valid_matches], axis=1)
+        
+        """
+        correlation_matrix = df_final.corr()
+        corr_with_target = correlation_matrix["result"].sort_values(ascending=False)
+
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt='.2f') 
+        plt.title('Correlation Matrix')
+        plt.savefig("correlation_matrix.png", dpi=300)  # Guardar en PNG
+        plt.show()
+
+        plt.figure(figsize=(12,6))
+        corr_with_target.plot(kind="bar")
+        plt.ylabel("Correlación con result_num")
+        plt.title("Correlación de variables con el resultado")
+        plt.tight_layout()
+        plt.savefig("correlation_with_result.png", dpi=300)
+        plt.show()
+        
+
+        df_final.info()
+        df_final.describe()
+        df_final.isna().sum()
+        print(df_final.head())
+        """
 
         # Train the model
-        y_train = train_set["quality"]
-        X_train = train_set.drop("quality", axis=1)
-
-        y_test = test_set["quality"]
-        X_test = test_set.drop("quality", axis=1)
+        y_train = df_final["result"]
+        X_train = df_final.drop("result", axis=1)
 
         # Define the model
         log_reg_liblinear = LogisticRegression(solver='liblinear', max_iter=10000)
@@ -74,10 +126,47 @@ class QuinielaModel:
         )
 
         grid_search_logReg_liblinear.fit(X_train, y_train)
+        self.trained_model = grid_search_logReg_liblinear.best_estimator_
+
+        print(df_final.head(10))
 
     def predict(self, predict_data):
         # Do something here to predict
-        return ["X" for _ in range(len(predict_data))]
+        matches = predict_data.copy()
+        valid_matches = matches[matches['score'].notna() & matches['score'].str.contains(':')].copy()
+        valid_matches[['home_goals', 'away_goals']] = (valid_matches['score'].str.split(':', expand=True).astype(int))
+        valid_matches['result'] = valid_matches.apply(get_result, axis=1)
+
+        # valid_matches["season"] = valid_matches["season"].str.split("-").str[0].astype(int)
+        valid_matches["date"] = valid_matches.apply(generate_date, axis=1)
+        valid_matches[["month", "day", "year"]] = valid_matches["date"].str.split("/", expand=True).astype(int)
+        
+        valid_matches.info()
+        valid_matches.describe()
+
+        valid_matches = valid_matches.drop(columns=["season", "date", "score", "time"])  
+
+        encoder = OneHotEncoder(handle_unknown="ignore", categories=[self.teams, self.teams])
+        encoded = encoder.fit_transform(valid_matches[["home_team", "away_team"]])
+        encoded_df = pd.DataFrame(encoded.toarray(), columns=encoder.get_feature_names_out(["home_team", "away_team"]))
+        valid_matches = valid_matches.drop(columns=["home_team", "away_team"])
+        df_final = pd.concat([encoded_df, valid_matches], axis=1)
+
+        y_test = df_final["result"]
+        X_test = df_final.drop("result", axis=1)
+
+        y_pred = self.trained_model.predict(X_test)
+        
+        feature_names = sorted(y_test.unique())
+        conf_mat_liblinear = confusion_matrix(y_test, y_pred, labels=feature_names)
+        disp_liblinear = ConfusionMatrixDisplay(confusion_matrix=conf_mat_liblinear, display_labels=feature_names)
+        disp_liblinear.plot()
+        plt.title("Logistic Regression with liblinear solver")
+        plt.savefig("confusion_matrix.png", dpi=300)
+        plt.show()
+
+        return y_pred
+        
 
     @classmethod
     def load(cls, filename):

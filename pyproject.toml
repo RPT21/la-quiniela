@@ -6,7 +6,9 @@ readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "pandas>=2.3.3",
-    "scikit-learn"
+    "scikit-learn",
+    "matplotlib",
+    "seaborn"
 ]
 
 [project.scripts]
