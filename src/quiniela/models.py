@@ -62,7 +62,7 @@ class QuinielaModel:
         # valid_matches.isna().sum()
         # valid_matches["time"].value_counts()
 
-        valid_matches = valid_matches.drop(columns=["season", "date", "score", "time"])  
+        valid_matches = valid_matches.drop(columns=["season", "date", "score", "time", "home_goals", "away_goals"])  
         self.teams = pd.unique(valid_matches[["home_team", "away_team"]].values.ravel()) # Save the teams that have been used to fit the data
 
         encoder = OneHotEncoder(handle_unknown="ignore", categories=[self.teams, self.teams])
@@ -128,11 +128,13 @@ class QuinielaModel:
         grid_search_logReg_liblinear.fit(X_train, y_train)
         self.trained_model = grid_search_logReg_liblinear.best_estimator_
 
-        print(df_final.head(10))
+        print(df_final)
 
     def predict(self, predict_data):
         # Do something here to predict
         matches = predict_data.copy()
+        print("MATCHES")
+        print(matches)
         valid_matches = matches[matches['score'].notna() & matches['score'].str.contains(':')].copy()
         valid_matches[['home_goals', 'away_goals']] = (valid_matches['score'].str.split(':', expand=True).astype(int))
         valid_matches['result'] = valid_matches.apply(get_result, axis=1)
@@ -144,7 +146,7 @@ class QuinielaModel:
         valid_matches.info()
         valid_matches.describe()
 
-        valid_matches = valid_matches.drop(columns=["season", "date", "score", "time"])  
+        valid_matches = valid_matches.drop(columns=["season", "date", "score", "time", "home_goals", "away_goals"])  
 
         encoder = OneHotEncoder(handle_unknown="ignore", categories=[self.teams, self.teams])
         encoded = encoder.fit_transform(valid_matches[["home_team", "away_team"]])
@@ -163,8 +165,8 @@ class QuinielaModel:
         disp_liblinear.plot()
         plt.title("Logistic Regression with liblinear solver")
         plt.savefig("confusion_matrix.png", dpi=300)
-        plt.show()
-
+        
+        print(df_final)
         return y_pred
         
 
