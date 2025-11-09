@@ -93,8 +93,10 @@ def main():
             f"Predicting matchday {args.matchday} in season {args.season}, division {args.division}"
         )
         model = models.QuinielaModel.load(settings.MODELS_PATH / args.model_name)
-        # predict_data = io.load_matchday(args.season, args.division, args.matchday)
-        predict_data = io.load_division(args.season, args.division)
+        predict_data = io.load_matchday(args.season, args.division, args.matchday)
+        # predict_data = io.load_division(args.season, args.division)
+        # Filter data with None
+        predict_data = predict_data[predict_data['score'].notna() & predict_data['score'].str.contains(':')].copy()
         predict_data["pred"] = model.predict(predict_data)
         print(
             f"Matchday {args.matchday} - LaLiga - Division {args.division} - Season {args.season}"
