@@ -8,7 +8,6 @@ dependencies = [
     "pandas>=2.3.3",
     "scikit-learn",
     "matplotlib",
-    "seaborn"
 ]
 
 [project.scripts]
