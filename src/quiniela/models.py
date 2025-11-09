@@ -103,7 +103,15 @@ class QuinielaModel:
         X_train = df_final.drop("result", axis=1)
 
         # Define the model
+        gradient_boosting = GradientBoostingClassifier()
+
+        # Define the model
         log_reg_liblinear = LogisticRegression(solver='liblinear', max_iter=10000)
+
+        # Define the model
+        random_forest = RandomForestClassifier(random_state=42)
+
+        """
 
         # Cross Validation
         print("Cross Validation results:")
@@ -127,6 +135,44 @@ class QuinielaModel:
 
         grid_search_logReg_liblinear.fit(X_train, y_train)
         self.trained_model = grid_search_logReg_liblinear.best_estimator_
+        """
+
+        """
+        # Define hyperparameter grid for RandomSearch
+        param_dist_gradient = {
+            'n_estimators': [100, 200, 300],
+            'learning_rate': [0.01, 0.05, 0.1, 0.2],
+            'max_depth': [3, 4, 5, 6],
+            'subsample': [0.6, 0.8, 1.0],
+            'min_samples_split': [2, 5, 10],
+            'min_samples_leaf': [1, 3, 5]
+        }
+
+        random_search_gradient = RandomizedSearchCV(
+            gradient_boosting,
+            param_distributions=param_dist_gradient,
+            n_iter=5,  # número of random combinations to test
+            cv=4,       # cross-validation 4-fold
+            scoring='accuracy',  # 'accuracy' or 'f1_macro' or 'f1_weighted'
+            n_jobs=-1,
+            random_state=42,
+            verbose=1
+        )
+
+        random_search_gradient.fit(X_train, y_train)
+        
+        self.trained_model = random_search_gradient.best_estimator_
+        """
+
+        # gradient_boosting.fit(X_train, y_train)
+        # self.trained_model = gradient_boosting
+
+        # log_reg_liblinear.fit(X_train, y_train)
+        # self.trained_model = log_reg_liblinear
+
+        random_forest.fit(X_train, y_train)
+        self.trained_model = random_forest
+        
 
         print(df_final)
 
@@ -167,6 +213,8 @@ class QuinielaModel:
         plt.savefig("confusion_matrix.png", dpi=300)
         
         print(df_final)
+        print(f"Accuracy on test Gradient Boosting Classifier: {accuracy_score(y_test, y_pred):.4f}")
+
         return y_pred
         
 
