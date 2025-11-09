@@ -20,20 +20,6 @@ def load_matchday(season, division, matchday):
         raise ValueError("There is no matchday data for the values given")
     return data
 
-def load_division(season, division):
-    with sqlite3.connect(settings.DATABASE_PATH) as conn:
-        data = pd.read_sql(
-            f"""
-            SELECT * FROM Matches
-                WHERE season = '{season}'
-                  AND division = {division}
-        """,
-            conn,
-        )
-    if data.empty:
-        raise ValueError("There is no matchday data for the values given")
-    return data
-
 def load_historical_data(seasons):
     with sqlite3.connect(settings.DATABASE_PATH) as conn:
         if seasons == "all":
