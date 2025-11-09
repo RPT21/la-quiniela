@@ -1,6 +1,6 @@
 ## LaQuiniela of LaLiga
 
-Team members: XXX - XXX -XXX
+Team members: Roger Pieres 1653925 - Laura Gil 1636004 - Noel Sánchez 1636380 - Joel Punzano 1631332
 
 This repo contains the skeleton for you to build your first ML project. Use the data in ```laliga.sqlite``` to build a ML model that predicts the outcome of a matchday in LaLiga (Spanish Football League).
 
