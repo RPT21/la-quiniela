@@ -1,10 +1,8 @@
 import pickle
 
 # Import all necessary libraries
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 # For machine learning (you will probably need to add more)
 from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV, cross_validate
@@ -13,17 +11,11 @@ from sklearn.metrics import classification_report, mean_squared_error, accuracy_
 
 # Models
 from sklearn.linear_model import (
-    LogisticRegression, PassiveAggressiveClassifier, RidgeClassifier
+    LogisticRegression
 )
 from sklearn.ensemble import (
-    RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier,
-    HistGradientBoostingClassifier, BaggingClassifier
+    RandomForestClassifier, GradientBoostingClassifier,
 )
-from sklearn.svm import SVC
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.neural_network import MLPClassifier
 
 def get_result(row):
     if row['home_goals'] > row['away_goals']:
@@ -164,14 +156,14 @@ class QuinielaModel:
         self.trained_model = random_search_gradient.best_estimator_
         """
 
-        # gradient_boosting.fit(X_train, y_train)
-        # self.trained_model = gradient_boosting
+        gradient_boosting.fit(X_train, y_train)
+        self.trained_model = gradient_boosting
 
         # log_reg_liblinear.fit(X_train, y_train)
         # self.trained_model = log_reg_liblinear
 
-        random_forest.fit(X_train, y_train)
-        self.trained_model = random_forest
+        # random_forest.fit(X_train, y_train)
+        # self.trained_model = random_forest
         
 
         print(df_final)
