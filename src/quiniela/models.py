@@ -67,6 +67,10 @@ class QuinielaModel:
 
     def predict(self, predict_data):
         
+        if predict_data.shape[0] == 0:
+            print("No data to predict")
+            return 0
+
         # Adapt data to do the prediction, all data has to be type int or float except our prediction column
         valid_matches = predict_data.copy()
         valid_matches[['home_goals', 'away_goals']] = (valid_matches['score'].str.split(':', expand=True).astype(int))
